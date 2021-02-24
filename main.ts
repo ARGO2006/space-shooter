@@ -1,3 +1,7 @@
+namespace SpriteKind {
+    export const powerup = SpriteKind.create()
+    export const mode = SpriteKind.create()
+}
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     projectile = sprites.createProjectileFromSprite(img`
         ....................
@@ -20,7 +24,33 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         ....................
         ....................
         ....................
-        `, mySprite, 150, 0)
+        `, mySprite, 200, 0)
+    projectile.x += -5
+    if (upgrade && upgrade.lifespan > 0) {
+        projectile = sprites.createProjectileFromSprite(img`
+            ....................
+            ....................
+            ....................
+            ....................
+            ....................
+            ..........999999....
+            .......8899911999...
+            ....99999999911199..
+            888888899999999199..
+            .99999999999999199..
+            ...888889999999199..
+            ......999888999999..
+            ......8888....999...
+            ....................
+            ....................
+            ....................
+            ....................
+            ....................
+            ....................
+            ....................
+            `, mySprite, 200, 0)
+        projectile.x += 5
+    }
 })
 statusbars.onZero(StatusBarKind.EnemyHealth, function (status) {
     status.spriteAttachedTo().destroy(effects.blizzard, 500)
@@ -46,6 +76,64 @@ statusbars.onZero(StatusBarKind.EnemyHealth, function (status) {
         .9991......999911...
         99911..........91...
         `)
+    enemyDeath(status.spriteAttachedTo())
+})
+function enemyDeath (enemy: Sprite) {
+    enemy.destroy(effects.disintegrate, 500)
+    if (Math.percentChance(15)) {
+        powerup = sprites.create(img`
+            .....................
+            ......fffffffff......
+            ....ff555bbb555ff....
+            ...f5544444444455f...
+            ..f555444444444555f..
+            ..f555777777f77555f..
+            .f555577777fff75555f.
+            .f5555777777f775555f.
+            .f55557777777775555f.
+            .f55557777777775555f.
+            .f55557777f77775555f.
+            .f55557777777775555f.
+            .f55557777777775555f.
+            .f555577777ff775555f.
+            .f55557777777775555f.
+            ..f555fffffffff555f..
+            ..f555fffffffff555f..
+            ...f55fffffffff55f...
+            ....ff555555555ff....
+            ......fffffffff......
+            .....................
+            `, SpriteKind.powerup)
+        powerup.x = enemy.x
+        powerup.y = enemy.y
+    }
+}
+sprites.onOverlap(SpriteKind.Player, SpriteKind.powerup, function (sprite, otherSprite) {
+    upgrade = sprites.create(img`
+        ..........999999....
+        .......8899911999...
+        ....99999999911199..
+        888888899999999199..
+        .99999999999999199..
+        ...888889999999199..
+        ......999888999999..
+        ......8888....999...
+        ....................
+        ....................
+        ..........999999....
+        .......8899911999...
+        ....99999999911199..
+        888888899999999199..
+        .99999999999999199..
+        ...888889999999199..
+        ......999888999999..
+        ......8888....999...
+        ....................
+        ....................
+        `, SpriteKind.mode)
+    upgrade.setPosition(45, 12)
+    upgrade.lifespan = 10000
+    otherSprite.destroy()
 })
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, otherSprite) {
     sprite.destroy()
@@ -54,6 +142,7 @@ sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, oth
     statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += -15
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    enemyDeath(otherSprite)
     info.changeLifeBy(-1)
     otherSprite.destroy(effects.fire, 500)
     mySprite.say("Well, That Hurts", 200)
@@ -114,6 +203,8 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSp
 })
 let statusbar: StatusBarSprite = null
 let Enemy_Ship: Sprite = null
+let powerup: Sprite = null
+let upgrade: Sprite = null
 let projectile: Sprite = null
 let mySprite: Sprite = null
 effects.starField.startScreenEffect()
@@ -178,5 +269,5 @@ game.onUpdateInterval(2000, function () {
     statusbar = statusbars.create(12, 2, StatusBarKind.EnemyHealth)
     statusbar.attachToSprite(Enemy_Ship)
     statusbar.setColor(9, 7)
-    statusbar.max = 50
+    statusbar.max = 100
 })
